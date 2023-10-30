@@ -1,5 +1,5 @@
 interface ICanvas {
-  draw(cb: (arg: string) => void): void;
+  display(cb: (arg: string) => void): void;
 }
 
 class Canvas implements ICanvas {
@@ -8,7 +8,7 @@ class Canvas implements ICanvas {
     this.data = Array(height).fill(0).map(() => Array(width).fill(' '));
   }
 
-  draw(cb: (arg: string) => void): void {
+  display(cb: (arg: string) => void): void {
     this.data.forEach(row => {
       row.forEach(cell => {
         cb(cell);

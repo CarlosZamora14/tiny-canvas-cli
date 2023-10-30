@@ -1,7 +1,4 @@
 import * as readline from 'readline';
-import Canvas from './models/Canvas';
-
-const canvas = new Canvas(30, 30);
 
 const rl = readline.createInterface({
   input: process.stdin,
