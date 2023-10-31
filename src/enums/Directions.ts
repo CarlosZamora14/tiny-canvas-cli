@@ -1,12 +1,12 @@
 enum Directions {
-  NORTH = 'North',
-  NORTHEAST = 'Northeast',
-  EAST = 'East',
-  SOUTHEAST = 'Southeast',
-  SOUTH = 'South',
-  SOUTHWEST = 'Southwest',
-  WEST = 'West',
-  NORTHWEST = 'Northwest',
+  NORTH = 'north',
+  NORTHEAST = 'northeast',
+  EAST = 'east',
+  SOUTHEAST = 'southeast',
+  SOUTH = 'south',
+  SOUTHWEST = 'southwest',
+  WEST = 'west',
+  NORTHWEST = 'northwest',
 }
 
 export default Directions;

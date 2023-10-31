@@ -7,13 +7,14 @@ interface ICursor {
   drawingMode: DrawingModes;
   direction: Directions;
 
-  rotate(n: number): Directions;
-  step(n: number): void;
+  rotate(times: number): Directions;
+  move(steps: number, callback: () => void): void;
 }
 
 class Cursor implements ICursor {
   private _drawingMode: DrawingModes = DrawingModes.HOVER;
   private _direction: Directions = Directions.NORTH;
+
   constructor(
     private _posX: number,
     private _posY: number,
@@ -45,7 +46,7 @@ class Cursor implements ICursor {
     this._drawingMode = mode;
   }
 
-  rotate(n: number): Directions {
+  rotate(times: number): Directions {
     const mappings = new Map<Directions, Directions>([
       [Directions.NORTH, Directions.NORTHEAST],
       [Directions.NORTHEAST, Directions.EAST],
@@ -57,8 +58,8 @@ class Cursor implements ICursor {
       [Directions.NORTHWEST, Directions.NORTH],
     ]);
 
-    // At most we'll have to do 7 rotations since the total number of directions is 8
-    const times: number = (n % mappings.size) + mappings.size;
+    // At most we'll have to do 7 rotations since the total number of directions is 8.
+    times = (times % mappings.size) + mappings.size;
 
     for (let i = 0; i < times; i++) {
       this._direction = mappings.get(this._direction) ?? this._direction;
@@ -67,7 +68,7 @@ class Cursor implements ICursor {
     return this._direction;
   }
 
-  step(n: number): void {
+  move(steps: number, callback: () => void): void {
     const mappings = new Map<Directions, Point>([
       [Directions.NORTH, { x: 0, y: -1 }],
       [Directions.NORTHEAST, { x: 1, y: -1 }],
@@ -79,12 +80,25 @@ class Cursor implements ICursor {
       [Directions.NORTHWEST, { x: -1, y: -1 }],
     ]);
 
-    const stepsX = (mappings.get(this._direction)?.x ?? 0) * n;
-    const stepsY = (mappings.get(this._direction)?.y ?? 0) * n;
+    const offsetX = (mappings.get(this._direction)?.x ?? 0);
+    const offsetY = (mappings.get(this._direction)?.y ?? 0);
 
-    this._posX = Math.max(this._minPosX, Math.min(this._maxPosX, this._posX + stepsX));
-    this._posY = Math.max(this._minPosY, Math.min(this._maxPosY, this._posY + stepsY));
+    // Once we reach any of the borders of the canvas, the function will return.
+    for (let i = 0; i < steps; i++) {
+      const nextPosX = this._posX + offsetX;
+      const nextPosY = this._posY + offsetY;
+
+      if (
+        (this._minPosX > nextPosX || nextPosX > this._maxPosX) ||
+        (this._minPosY > nextPosY || nextPosY > this._maxPosY)
+      ) return;
+
+      this._posX = nextPosX;
+      this._posY = nextPosY;
+      process.stdout.write(`Cursor at ${this._posX}, ${this._posY}\r\n`);
+      callback();
+    }
   }
 }
 
-export default Cursor;
+export { ICursor, Cursor as default };
