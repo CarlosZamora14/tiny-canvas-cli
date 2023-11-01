@@ -6,6 +6,7 @@ enum CommandsInfo {
   DRAW = `'draw' sets the drawing mode to draw, allowing the cursor to place asterisks on the canvas.`,
   ERASER = `'eraser' sets the drawing mode to eraser, making the cursor clear the canvas cells, leaving them blank.`,
   POSITION = `'pos' prints the current cursor position in the format (x, y).`,
+  DIRECTION = `'dir' prints the current cursor direction.`,
   DISPLAY = `'display' prints the current canvas.`,
   CLEAR = `'clear' resets the canvas without changing the cursor position, direction, or drawing mode.`,
   QUIT = `'quit' closes the application.`,

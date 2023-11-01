@@ -6,6 +6,7 @@ enum Commands {
   DRAW = 'draw',
   ERASER = 'eraser',
   POSITION = 'pos',
+  DIRECTION = 'dir',
   DISPLAY = 'display',
   CLEAR = 'clear',
   QUIT = 'quit',
