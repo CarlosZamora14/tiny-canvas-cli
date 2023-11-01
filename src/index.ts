@@ -1,12 +1,20 @@
 import * as readline from 'readline';
+import Canvas, { ICanvas } from './models/Canvas';
+import App, { IApp } from './models/App';
+
+const width = 30, height = 30;
+const canvas: ICanvas = new Canvas(width, height);
+const app: IApp = new App(
+  canvas,
+  (arg: string): void => { process.stdout.write(arg); },
+  (): void => { process.exit(0); }
+);
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
-rl.on('line', input => {
-  if (input.trim()) {
-    process.stdout.write(`You wrote: ${input}\r\n`);
-  }
+rl.on('line', line => {
+  app.execute(line);
 });

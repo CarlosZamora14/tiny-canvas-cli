@@ -80,13 +80,13 @@ class Cursor implements ICursor {
       [Directions.NORTHWEST, { x: -1, y: -1 }],
     ]);
 
-    const offsetX = (mappings.get(this._direction)?.x ?? 0);
-    const offsetY = (mappings.get(this._direction)?.y ?? 0);
+    const offsetX: number = (mappings.get(this._direction)?.x ?? 0);
+    const offsetY: number = (mappings.get(this._direction)?.y ?? 0);
 
     // Once we reach any of the borders of the canvas, the function will return.
     for (let i = 0; i < steps; i++) {
-      const nextPosX = this._posX + offsetX;
-      const nextPosY = this._posY + offsetY;
+      const nextPosX: number = this._posX + offsetX;
+      const nextPosY: number = this._posY + offsetY;
 
       if (
         (this._minPosX > nextPosX || nextPosX > this._maxPosX) ||
@@ -95,7 +95,6 @@ class Cursor implements ICursor {
 
       this._posX = nextPosX;
       this._posY = nextPosY;
-      process.stdout.write(`Cursor at ${this._posX}, ${this._posY}\r\n`);
       callback();
     }
   }

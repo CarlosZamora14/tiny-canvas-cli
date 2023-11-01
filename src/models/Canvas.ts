@@ -1,8 +1,13 @@
-import DrawingModes from '../enums/DrawingModes';
 import Cursor, { ICursor } from './Cursor';
+import BoxChars from '../enums/BoxDrawingCharacters';
+import DrawingModes from '../enums/DrawingModes';
+import Point from './Point';
+import Directions from '../enums/Directions';
 
 interface ICanvas {
   drawingMode: DrawingModes;
+  cursorPosition: Point;
+  cursorDirection: Directions;
 
   display(callback: (arg: string) => void): void;
   clear(): void;
@@ -30,6 +35,14 @@ class Canvas implements ICanvas {
     return this._cursor.drawingMode;
   }
 
+  get cursorPosition(): Point {
+    return this._cursor.position;
+  }
+
+  get cursorDirection(): Directions {
+    return this._cursor.direction;
+  }
+
   set drawingMode(mode: DrawingModes) {
     this._cursor.drawingMode = mode;
   }
@@ -48,13 +61,24 @@ class Canvas implements ICanvas {
   };
 
   display(callback: (arg: string) => void): void {
+    const topBorder: string = (
+      BoxChars.TOP_LEFT_CORNER +
+      BoxChars.HORIZONTAL.repeat(this._width) +
+      BoxChars.TOP_RIGHT_CORNER
+    );
+    const bottomBorder: string = (
+      BoxChars.BOTTOM_LEFT_CORNER +
+      BoxChars.HORIZONTAL.repeat(this._width) +
+      BoxChars.BOTTOM_RIGHT_CORNER
+    );
+    const crlf: string = '\r\n';
+
+    callback(topBorder + crlf);
     this._data.forEach(row => {
-      row.forEach(cell => {
-        callback(cell);
-      });
-      callback('\r\n');
+      const line = BoxChars.VERTICAL + row.join('') + BoxChars.VERTICAL;
+      callback(line + crlf);
     });
-    callback('\r\n');
+    callback(bottomBorder + crlf);
   }
 
   clear(): void {
