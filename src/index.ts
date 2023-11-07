@@ -1,6 +1,5 @@
 import * as readline from 'readline';
-import Canvas, { ICanvas } from './models/Canvas';
-import App, { IApp } from './models/App';
+import { Canvas, ICanvas, App, IApp } from './models';
 
 const width = 30, height = 30;
 const canvas: ICanvas = new Canvas(width, height);

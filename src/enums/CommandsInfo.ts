@@ -16,4 +16,4 @@ enum CommandsInfo {
   INFO = `'info <command-name>' displays information about a specific command. If no second argument is provided, information about all commands is shown.`,
 }
 
-export default CommandsInfo;
+export { CommandsInfo };

@@ -1,8 +1,11 @@
+import fs from 'fs';
 import { ICanvas } from './Canvas';
-import BoxChars from '../enums/BoxDrawingCharacters';
-import Commands from '../enums/Commands';
-import Messages from '../enums/Messages';
-import DrawingModes from '../enums/DrawingModes';
+import {
+  BoxDrawingCharacters as BoxChars,
+  Commands,
+  Messages,
+  DrawingModes,
+} from '../enums';
 
 interface IApp {
   execute: (line: string) => void;
@@ -57,6 +60,7 @@ class App implements IApp {
   execute(line: string): void {
     const input: string = line.trim().toLowerCase();
     const crlf: string = '\r\n';
+    const numberRegex: RegExp = /^[0-9]+$/;
 
     if (input) {
       const [command, ...rest] = input.split(' ');
@@ -82,7 +86,7 @@ class App implements IApp {
         case Commands.STEPS:
           if (rest.length === 0) {
             this._canvas.moveCursor(1);
-          } else if (rest.length === 1 && rest[0].match(/^[0-9]+$/)) {
+          } else if (rest.length === 1 && numberRegex.test(rest[0])) {
             this._canvas.moveCursor(Number(rest[0]));
           } else {
             this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
@@ -92,7 +96,7 @@ class App implements IApp {
         case Commands.ROTATE:
           if (rest.length === 0) {
             this._canvas.rotateCursorDirection(-1);
-          } else if (rest.length === 1 && rest[0].match(/^[0-9]+$/)) {
+          } else if (rest.length === 1 && numberRegex.test(rest[0])) {
             this._canvas.rotateCursorDirection(-Number(rest[0]));
           } else {
             this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
@@ -102,7 +106,7 @@ class App implements IApp {
         case Commands.ROTATE_CLOCKWISE:
           if (rest.length === 0) {
             this._canvas.rotateCursorDirection(1);
-          } else if (rest.length === 1 && rest[0].match(/^[0-9]+$/)) {
+          } else if (rest.length === 1 && numberRegex.test(rest[0])) {
             this._canvas.rotateCursorDirection(Number(rest[0]));
           } else {
             this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
@@ -169,4 +173,4 @@ class App implements IApp {
   }
 }
 
-export { IApp, App as default };
+export { IApp, App };

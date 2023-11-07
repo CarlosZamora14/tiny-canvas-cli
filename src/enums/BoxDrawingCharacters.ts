@@ -7,4 +7,4 @@ enum BoxDrawingCharacters {
   BOTTOM_LEFT_CORNER = '\u255A',
 }
 
-export default BoxDrawingCharacters;
+export { BoxDrawingCharacters };

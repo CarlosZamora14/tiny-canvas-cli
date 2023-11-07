@@ -1,6 +1,5 @@
-import DrawingModes from '../enums/DrawingModes';
-import Directions from '../enums/Directions';
-import Point from './Point';
+import { DrawingModes, Directions } from '../enums';
+import { Point } from './Point';
 
 interface ICursor {
   position: Point;
@@ -100,4 +99,4 @@ class Cursor implements ICursor {
   }
 }
 
-export { ICursor, Cursor as default };
+export { ICursor, Cursor };

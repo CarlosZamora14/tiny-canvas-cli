@@ -16,4 +16,4 @@ enum Commands {
   INFO = 'info',
 }
 
-export default Commands;
+export { Commands };

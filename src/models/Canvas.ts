@@ -1,8 +1,10 @@
-import Cursor, { ICursor } from './Cursor';
-import BoxChars from '../enums/BoxDrawingCharacters';
-import DrawingModes from '../enums/DrawingModes';
-import Point from './Point';
-import Directions from '../enums/Directions';
+import { Cursor, ICursor } from './Cursor';
+import { Point } from './Point';
+import {
+  BoxDrawingCharacters as BoxChars,
+  Directions,
+  DrawingModes,
+} from '../enums';
 
 interface ICanvas {
   drawingMode: DrawingModes;
@@ -98,4 +100,4 @@ class Canvas implements ICanvas {
   }
 }
 
-export { ICanvas, Canvas as default };
+export { ICanvas, Canvas };

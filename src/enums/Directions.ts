@@ -9,4 +9,4 @@ enum Directions {
   NORTHWEST = 'northwest',
 }
 
-export default Directions;
+export { Directions };

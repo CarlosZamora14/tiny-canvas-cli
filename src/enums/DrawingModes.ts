@@ -4,4 +4,4 @@ enum DrawingModes {
   ERASER = 'eraser',
 }
 
-export default DrawingModes;
+export { DrawingModes };
