@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as readLine from 'readline';
 import { ICanvas } from './Canvas';
 import {
   BoxDrawingCharacters as BoxChars,
@@ -6,6 +6,8 @@ import {
   Messages,
   DrawingModes,
 } from '../enums';
+import { fileExists } from '../utils/fileExists';
+import { saveFile } from '../utils/saveFile';
 
 interface IApp {
   execute: (line: string) => void;
@@ -15,9 +17,11 @@ class App implements IApp {
   constructor(
     private _canvas: ICanvas,
     private _outputCb: (arg: string) => void,
-    private _closeCb: () => void
+    private _closeCb: () => void,
+    private _readLineInterface: readLine.Interface,
   ) {
     this.displayCommands();
+    this.run();
   }
 
   private displayCommands(): void {
@@ -57,7 +61,71 @@ class App implements IApp {
     return (start + text + end);
   }
 
-  execute(line: string): void {
+  private run() {
+    this._readLineInterface.on('line', line => {
+      this.execute(line);
+    });
+  }
+
+  private askPrompt(question: Messages, messageOnError: Messages, conditionCb: (input: string) => boolean): Promise<string> {
+    let answer: string;
+    const crlf: string = '\r\n';
+
+    return new Promise<string>((resolve, reject) => {
+      try {
+        this._readLineInterface.question(question, async input => {
+
+          if (!conditionCb(input)) {
+            this._outputCb(messageOnError);
+            this._outputCb(crlf);
+
+            answer = await this.askPrompt(question, messageOnError, conditionCb);
+          } else {
+            answer = input;
+          }
+
+          resolve(answer);
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  private async saveFileDialog(): Promise<void> {
+    const filenameRegex: RegExp = /^\s*\w+\s*$/;
+    const yesOrNoRegex: RegExp = /^\s*(y|n|yes|no)\s*$/i;
+    const crlf = '\r\n';
+
+    try {
+      let filename = await this.askPrompt(Messages.REQUEST_FILE_NAME, Messages.INVALID_FILE_NAME, (input: string): boolean => {
+        return filenameRegex.test(input);
+      });
+
+      if (fileExists(filename)) {
+        this._outputCb(Messages.FILE_EXISTS + crlf);
+        let confirmation = await this.askPrompt(Messages.REPLACE_FILE, Messages.INVALID_ANSWER, (input: string): boolean => {
+          return yesOrNoRegex.test(input);
+        });
+
+        confirmation = confirmation.trim().toLowerCase()[0];
+
+        if (confirmation === 'y') {
+          saveFile(this._canvas.getCanvasData(), filename);
+          this._outputCb(Messages.FILE_SAVED + crlf);
+        } else {
+          this.saveFileDialog();
+        }
+      } else {
+        saveFile(this._canvas.getCanvasData(), filename);
+        this._outputCb(Messages.FILE_SAVED + crlf);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async execute(line: string): Promise<void> {
     const input: string = line.trim().toLowerCase();
     const crlf: string = '\r\n';
     const numberRegex: RegExp = /^[0-9]+$/;
@@ -160,6 +228,17 @@ class App implements IApp {
         case Commands.QUIT:
           if (rest.length === 0) {
             this._closeCb();
+          } else {
+            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
+            this._outputCb(crlf);
+          }
+          break;
+        case Commands.SAVE:
+          if (rest.length === 0) {
+            this._readLineInterface.removeAllListeners();
+            await this.saveFileDialog();
+            this.run();
+
           } else {
             this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
             this._outputCb(crlf);

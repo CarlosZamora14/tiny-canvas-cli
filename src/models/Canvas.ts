@@ -11,6 +11,7 @@ interface ICanvas {
   cursorPosition: Point;
   cursorDirection: Directions;
 
+  getCanvasData(): string;
   display(callback: (arg: string) => void): void;
   clear(): void;
   moveCursor(steps: number): void;
@@ -81,6 +82,18 @@ class Canvas implements ICanvas {
       callback(line + crlf);
     });
     callback(bottomBorder + crlf);
+  }
+
+  getCanvasData(): string {
+    let data: string = '';
+    const crlf: string = '\r\n';
+
+    this._data.forEach(row => {
+      const line = row.join('') + crlf;
+      data += line;
+    });
+
+    return data;
   }
 
   clear(): void {
