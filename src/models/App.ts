@@ -153,9 +153,9 @@ class App implements IApp {
           break;
         case Commands.STEPS:
           if (rest.length === 0) {
-            this._canvas.moveCursor(1);
+            this._canvas.moveCursor(1, false);
           } else if (rest.length === 1 && numberRegex.test(rest[0])) {
-            this._canvas.moveCursor(Number(rest[0]));
+            this._canvas.moveCursor(Number(rest[0]), false);
           } else {
             this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
             this._outputCb(crlf);
