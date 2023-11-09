@@ -146,6 +146,7 @@ class App implements IApp {
         case Commands.CLEAR:
           if (rest.length === 0) {
             this._canvas.clear();
+            this._canvas.numberOfOperations += 1;
           } else {
             this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
             this._outputCb(crlf);
@@ -154,8 +155,10 @@ class App implements IApp {
         case Commands.STEPS:
           if (rest.length === 0) {
             this._canvas.moveCursor(1, false);
+            this._canvas.numberOfOperations += 1;
           } else if (rest.length === 1 && numberRegex.test(rest[0])) {
             this._canvas.moveCursor(Number(rest[0]), false);
+            this._canvas.numberOfOperations += 1;
           } else {
             this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
             this._outputCb(crlf);
