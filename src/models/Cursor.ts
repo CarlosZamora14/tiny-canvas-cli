@@ -7,7 +7,7 @@ interface ICursor {
   direction: Directions;
 
   rotate(times: number): Directions;
-  move(steps: number, callback: (undoing: boolean) => void, undoing: boolean): void;
+  move(steps: number, callback: () => void): void;
 }
 
 class Cursor implements ICursor {
@@ -82,7 +82,7 @@ class Cursor implements ICursor {
     return this._direction;
   }
 
-  move(steps: number, callback: (undoing: boolean) => void, undoing: boolean): void {
+  move(steps: number, callback: () => void): void {
     const mappings = new Map<Directions, Point>([
       [Directions.NORTH, { x: 0, y: -1 }],
       [Directions.NORTHEAST, { x: 1, y: -1 }],
@@ -109,7 +109,7 @@ class Cursor implements ICursor {
 
       this._posX = nextPosX;
       this._posY = nextPosY;
-      callback(undoing);
+      callback();
     }
   }
 }

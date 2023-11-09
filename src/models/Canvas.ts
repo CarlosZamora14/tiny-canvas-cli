@@ -183,7 +183,9 @@ class Canvas implements ICanvas {
   }
 
   moveCursor(steps: number, undoing: boolean): void {
-    this._cursor.move(steps, this.update, undoing);
+    this._cursor.move(steps, () => {
+      this.update(undoing);
+    });
   }
 
   rotateCursorDirection(times: number): void {

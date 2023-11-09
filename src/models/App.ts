@@ -1,5 +1,7 @@
 import * as readLine from 'readline';
+import assert from 'assert';
 import { ICanvas } from './Canvas';
+import { ICommand } from './CommandHistory';
 import {
   BoxDrawingCharacters as BoxChars,
   Commands,
@@ -34,7 +36,7 @@ class App implements IApp {
     this._outputCb(App.padCenter(title, terminalWidth) + crlf);
     this._outputCb(BoxChars.HORIZONTAL.repeat(terminalWidth) + crlf);
 
-    const commandNames = Object.values(Commands) as string[];
+    const commandNames: string[] = Object.values(Commands);
     commandNames.forEach(command => {
       switch (command) {
         case Commands.INFO:
@@ -59,6 +61,67 @@ class App implements IApp {
     const end: string = ' '.repeat(len - (text.length + start.length));
 
     return (start + text + end);
+  }
+
+  private parseInput(line: string): ICommand | null { // Returns null when the line is not a valid command
+    const input: string = line.trim().toLowerCase();
+    const crlf: string = '\r\n';
+    const numberRegex: RegExp = /^[0-9]+$/;
+    const commandNames: string[] = Object.values(Commands);
+
+    if (!input) {
+      // No input, there is no error but also not output
+      return null;
+    }
+
+    // First we check that there is a valid command
+    const [command, ...args] = input.split(' ');
+    if (!commandNames.includes(command)) {
+      this._outputCb(Messages.UNKNOWN_COMMAND + crlf);
+      return null;
+    }
+
+    if (args.length > 1) {
+      // There is no command that accepts more than 1 argument
+      this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS + crlf);
+      return null;
+    }
+
+    if (command === Commands.INFO) {
+      if (args.length === 1 && commandNames.includes(args[0])) {
+        this._outputCb('Info command with argument ' + args[0] + crlf);
+        return { type: command, userArgs: args, actualArgs: args } as ICommand;
+      } else if (args.length === 0) {
+        this._outputCb('Info command' + crlf);
+        return { type: command } as ICommand;
+      } else {
+        this._outputCb(Messages.UNKNOWN_COMMAND + crlf);
+        return null;
+      }
+    }
+
+    if (
+      command === Commands.STEPS ||
+      command === Commands.ROTATE ||
+      command === Commands.ROTATE_CLOCKWISE
+    ) {
+      if (args.length === 0) {
+        return { type: command, userArgs: ['1'], actualArgs: ['1'] } as ICommand;
+      } else if (!numberRegex.test(args[0])) {
+        this._outputCb(`Usage: ${command} <number>` + crlf);
+        return null;
+      } else {
+        return { type: command, userArgs: args, actualArgs: args } as ICommand;
+      }
+    }
+
+    if (args.length > 0) {
+      // The remaining unhandled commands do not require any arguments
+      this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS + crlf);
+      return null;
+    }
+
+    return { type: command } as ICommand;
   }
 
   private run() {
@@ -125,133 +188,108 @@ class App implements IApp {
     }
   }
 
-  async execute(line: string): Promise<void> {
-    const input: string = line.trim().toLowerCase();
-    const crlf: string = '\r\n';
-    const numberRegex: RegExp = /^[0-9]+$/;
+  execute(line: string): void {
+    const command: ICommand | null = this.parseInput(line);
 
-    if (input) {
-      const [command, ...rest] = input.split(' ');
-      switch (command) {
-        case Commands.DISPLAY:
-          if (rest.length === 0) {
-            this._canvas.display(text => {
-              this._outputCb(text);
-            });
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.CLEAR:
-          if (rest.length === 0) {
-            this._canvas.clear();
-            this._canvas.numberOfOperations += 1;
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.STEPS:
-          if (rest.length === 0) {
-            this._canvas.moveCursor(1, false);
-            this._canvas.numberOfOperations += 1;
-          } else if (rest.length === 1 && numberRegex.test(rest[0])) {
-            this._canvas.moveCursor(Number(rest[0]), false);
-            this._canvas.numberOfOperations += 1;
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.ROTATE:
-          if (rest.length === 0) {
-            this._canvas.rotateCursorDirection(-1);
-          } else if (rest.length === 1 && numberRegex.test(rest[0])) {
-            this._canvas.rotateCursorDirection(-Number(rest[0]));
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.ROTATE_CLOCKWISE:
-          if (rest.length === 0) {
-            this._canvas.rotateCursorDirection(1);
-          } else if (rest.length === 1 && numberRegex.test(rest[0])) {
-            this._canvas.rotateCursorDirection(Number(rest[0]));
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.DRAW:
-          if (rest.length === 0) {
-            this._canvas.drawingMode = DrawingModes.DRAW;
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.HOVER:
-          if (rest.length === 0) {
-            this._canvas.drawingMode = DrawingModes.HOVER;
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.ERASER:
-          if (rest.length === 0) {
-            this._canvas.drawingMode = DrawingModes.ERASER;
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.POSITION:
-          if (rest.length === 0) {
-            const { x, y } = this._canvas.cursorPosition;
-            this._outputCb(`The current cursor position is (${x}, ${y})`);
-            this._outputCb(crlf);
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.DIRECTION:
-          if (rest.length === 0) {
-            const direction: string = this._canvas.cursorDirection;
-            this._outputCb(`The current cursor direction is ${direction}`);
-            this._outputCb(crlf);
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.QUIT:
-          if (rest.length === 0) {
-            this._closeCb();
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        case Commands.SAVE:
-          if (rest.length === 0) {
-            this._readLineInterface.removeAllListeners();
-            await this.saveFileDialog();
-            this.run();
-
-          } else {
-            this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS);
-            this._outputCb(crlf);
-          }
-          break;
-        default:
-          this._outputCb(Messages.UNKNOWN_COMMAND);
-          this._outputCb(crlf);
-      }
+    if (command === null) {
+      return;
     }
+
+    switch (command.type) {
+      case Commands.DISPLAY:
+        this.displayCommand();
+        break;
+      case Commands.CLEAR:
+        this.clearCommand();
+        break;
+      case Commands.STEPS:
+        this.stepsCommand(command);
+        break;
+      case Commands.ROTATE:
+      case Commands.ROTATE_CLOCKWISE:
+        this.rotateCommand(command);
+        break;
+      case Commands.DRAW:
+      case Commands.HOVER:
+      case Commands.ERASER:
+        this.setDrawingMode(command);
+        break;
+      case Commands.POSITION:
+        this.positionCommand();
+        break;
+      case Commands.DIRECTION:
+        this.directionCommand();
+        break;
+      case Commands.QUIT:
+        this.quitCommand();
+        break;
+      case Commands.SAVE:
+        this.saveCommand();
+        break;
+      default:
+        this._outputCb(Messages.UNKNOWN_COMMAND + '\r\n');
+    }
+  }
+
+  private displayCommand(): void {
+    this._canvas.display(text => {
+      this._outputCb(text);
+    });
+  }
+
+  private clearCommand(): void {
+    this._canvas.clear();
+    this._canvas.numberOfOperations += 1;
+  }
+
+  private stepsCommand(command: ICommand): void {
+    assert(command.actualArgs !== undefined, 'The command was not parsed properly.');
+    this._canvas.moveCursor(Number(command.actualArgs[0]), false);
+    this._canvas.numberOfOperations += 1;
+  }
+
+  private setDrawingMode(command: ICommand): void {
+    switch (command.type) {
+      case Commands.DRAW:
+        this._canvas.drawingMode = DrawingModes.DRAW;
+        break;
+      case Commands.HOVER:
+        this._canvas.drawingMode = DrawingModes.HOVER;
+        break;
+      case Commands.ERASER:
+        this._canvas.drawingMode = DrawingModes.ERASER;
+        break;
+    }
+  }
+
+  private rotateCommand(command: ICommand): void {
+    assert(command.actualArgs !== undefined, 'The command was not parsed properly.');
+
+    if (command.type === Commands.ROTATE) {
+      this._canvas.rotateCursorDirection(-Number(command.actualArgs[0]));
+    } else {
+      this._canvas.rotateCursorDirection(Number(command.actualArgs[0]));
+    }
+  }
+
+  private positionCommand() {
+    const { x, y } = this._canvas.cursorPosition;
+    this._outputCb(`The current cursor position is (${x}, ${y})` + '\r\n');
+  }
+
+  private directionCommand() {
+    const direction: string = this._canvas.cursorDirection;
+    this._outputCb(`The current cursor direction is ${direction}` + '\r\n');
+  }
+
+  private quitCommand() {
+    this._closeCb();
+  }
+
+  private async saveCommand() {
+    this._readLineInterface.removeAllListeners();
+    await this.saveFileDialog();
+    this.run();
   }
 }
 
