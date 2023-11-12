@@ -7,6 +7,7 @@ import {
   Commands,
   Messages,
   DrawingModes,
+  Directions,
 } from '../enums';
 import { fileExists } from '../utils/fileExists';
 import { saveFile } from '../utils/saveFile';
@@ -24,6 +25,15 @@ class App implements IApp {
   ) {
     this.displayCommands();
     this.run();
+  }
+
+  private static padCenter(text: string, len: number): string {
+    if (text.length >= len) return text;
+
+    const start: string = ' '.repeat(Math.floor((len - text.length) / 2));
+    const end: string = ' '.repeat(len - (text.length + start.length));
+
+    return (start + text + end);
   }
 
   private displayCommands(): void {
@@ -54,13 +64,41 @@ class App implements IApp {
     });
   }
 
-  private static padCenter(text: string, len: number): string {
-    if (text.length >= len) return text;
+  private simplifyArg(command: Commands, inputArg: string): number {
+    let arg: number = Number(inputArg);
 
-    const start: string = ' '.repeat(Math.floor((len - text.length) / 2));
-    const end: string = ' '.repeat(len - (text.length + start.length));
+    if (command !== Commands.STEPS) {
+      const availableDirs = Object.values(Directions).length;
+      return (arg % availableDirs);
+    }
 
-    return (start + text + end);
+    // If the command is equal to steps, we must check the direction we are facing and compute the maximum
+    // number of steps we can take, then return the minimum between the user input and said minimum
+
+    const { x: posX, y: posY } = this._canvas.cursorPosition;
+    const minDistNorth = Math.min(posY, arg);
+    const minDistEast = Math.min(this._canvas.width - 1 - posX, arg);
+    const minDistSouth = Math.min(this._canvas.height - 1 - posY, arg);
+    const minDistWest = Math.min(posX, arg);
+
+    switch (this._canvas.cursorDirection) {
+      case Directions.NORTH:
+        return minDistNorth;
+      case Directions.NORTHEAST:
+        return Math.min(minDistNorth, minDistEast);
+      case Directions.EAST:
+        return minDistEast;
+      case Directions.SOUTHEAST:
+        return Math.min(minDistSouth, minDistEast);
+      case Directions.SOUTH:
+        return minDistSouth;
+      case Directions.SOUTHWEST:
+        return Math.min(minDistSouth, minDistWest);
+      case Directions.WEST:
+        return minDistWest;
+      case Directions.NORTHWEST:
+        return Math.min(minDistNorth, minDistWest);
+    }
   }
 
   private parseInput(line: string): ICommand | null { // Returns null when the line is not a valid command
@@ -110,10 +148,15 @@ class App implements IApp {
       } else if (!numberRegex.test(args[0])) {
         this._outputCb(`Usage: ${command} <number>` + crlf);
         return null;
-      } else {
-        return { type: command, userArgs: args, actualArgs: args } as ICommand;
       }
+
+      return {
+        type: command,
+        userArgs: args,
+        actualArgs: [String(this.simplifyArg(command, args[0]))],
+      } as ICommand;
     }
+
 
     if (args.length > 0) {
       // The remaining unhandled commands do not require any arguments
@@ -188,13 +231,7 @@ class App implements IApp {
     }
   }
 
-  execute(line: string): void {
-    const command: ICommand | null = this.parseInput(line);
-
-    if (command === null) {
-      return;
-    }
-
+  private executeCommand(command: ICommand): void {
     switch (command.type) {
       case Commands.DISPLAY:
         this.displayCommand();
@@ -229,6 +266,16 @@ class App implements IApp {
       default:
         this._outputCb(Messages.UNKNOWN_COMMAND + '\r\n');
     }
+  }
+
+  execute(line: string): void {
+    const command: ICommand | null = this.parseInput(line);
+
+    if (command === null) {
+      return;
+    }
+
+    this.executeCommand(command);
   }
 
   private displayCommand(): void {

@@ -18,6 +18,8 @@ interface ICanvas {
   cursorPosition: Point;
   cursorDirection: Directions;
   numberOfOperations: number;
+  width: number;
+  height: number;
 
   getCanvasData(): string;
   display(callback: (arg: string) => void): void;
@@ -49,6 +51,14 @@ class Canvas implements ICanvas {
       0, _width - 1,
       0, _height - 1
     );
+  }
+
+  get width(): number {
+    return this._width;
+  }
+
+  get height(): number {
+    return this._height;
   }
 
   get drawingMode(): DrawingModes {
@@ -183,6 +193,8 @@ class Canvas implements ICanvas {
   }
 
   moveCursor(steps: number, undoing: boolean): void {
+    // We call it once because it needs to draw the current cell even if the number of steps is zero
+    this.update(undoing);
     this._cursor.move(steps, () => {
       this.update(undoing);
     });
