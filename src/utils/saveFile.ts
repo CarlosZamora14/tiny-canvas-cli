@@ -1,20 +1,21 @@
 import fs from 'fs';
 import path from 'path';
-import { fileExists } from './fileExists';
 
-function saveFile(content: string, filename: string) {
+function saveFile(content: string, filename: string): string {
   try {
     const folderName = 'files';
     const folderPath = path.join(__dirname, '..', '..', folderName);
     filename += '.txt';
 
-    if (!fileExists(folderName)) {
+    if (!fs.existsSync(folderName)) {
       fs.mkdirSync(folderPath);
     }
 
-    fs.writeFileSync(path.join(folderPath, filename), content);
+    const filePath: string = path.join(folderPath, filename);
+    fs.writeFileSync(filePath, content);
+    return filePath;
   } catch (err) {
-    process.stdout.write(`There was an error: ${err}`);
+    throw new Error(`There was an error: ${err}`);
   }
 }
 

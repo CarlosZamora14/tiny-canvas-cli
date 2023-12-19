@@ -25,41 +25,87 @@ class App implements IApp {
     this.run();
   }
 
-  private static padCenter(text: string, len: number): string {
-    if (text.length >= len) return text;
+  private getCommandInfo(commandName: string): string {
+    const commandMapping: Record<Commands, CommandsInfo> = {
+      [Commands.STEPS]: CommandsInfo.STEPS,
+      [Commands.ROTATE]: CommandsInfo.ROTATE,
+      [Commands.ROTATE_CLOCKWISE]: CommandsInfo.ROTATE_CLOCKWISE,
+      [Commands.HOVER]: CommandsInfo.HOVER,
+      [Commands.DRAW]: CommandsInfo.DRAW,
+      [Commands.ERASER]: CommandsInfo.ERASER,
+      [Commands.POSITION]: CommandsInfo.POSITION,
+      [Commands.DIRECTION]: CommandsInfo.DIRECTION,
+      [Commands.DISPLAY]: CommandsInfo.DISPLAY,
+      [Commands.CLEAR]: CommandsInfo.CLEAR,
+      [Commands.QUIT]: CommandsInfo.QUIT,
+      [Commands.UNDO]: CommandsInfo.UNDO,
+      [Commands.RESTORE]: CommandsInfo.RESTORE,
+      [Commands.SAVE]: CommandsInfo.SAVE,
+      [Commands.INFO]: CommandsInfo.INFO,
+    };
 
-    const start: string = ' '.repeat(Math.floor((len - text.length) / 2));
-    const end: string = ' '.repeat(len - (text.length + start.length));
+    return commandMapping[commandName as Commands];
+  }
 
-    return (start + text + end);
+  private getCommandUsage(commandName: string): string {
+    let usage: string = commandName;
+
+    switch (commandName) {
+      case Commands.INFO:
+        usage += ' <command-name>';
+        break;
+      case Commands.STEPS:
+      case Commands.ROTATE:
+      case Commands.ROTATE_CLOCKWISE:
+        usage += ' <n>';
+        break;
+    }
+
+    return usage;
+  }
+
+  private printCommandInfo(commandName: string, terminalWidth: number, largestCommandUsage: number): void {
+    const crlf: string = '\r\n';
+    const tab: string = ' '.repeat(4);
+    const commandUsage = this.getCommandUsage(commandName);
+
+    let commandInfo: string = this.getCommandInfo(commandName);
+    if (terminalWidth <= largestCommandUsage + 3 * tab.length + 16) {
+      this._outputCb(tab + tab + commandUsage + ': ' + commandInfo + crlf + crlf);
+    } else {
+      let line = tab + tab + commandUsage + ' '.repeat(largestCommandUsage - commandUsage.length) + tab + commandInfo;
+      this._outputCb(line.slice(0, terminalWidth) + crlf);
+      line = line.slice(terminalWidth);
+      while (line.length) {
+        line = ' '.repeat(tab.length * 3 + largestCommandUsage + 1) + line;
+        this._outputCb(line.slice(0, terminalWidth) + crlf);
+        line = line.slice(terminalWidth);
+      }
+    }
   }
 
   private displayCommands(): void {
     const minWidth: number = 100;
-    const terminalWidth: number = Math.min(process.stdout.columns ?? minWidth, minWidth);
+    const terminalWidth: number = process.stdout.columns ?? minWidth;
+
     const crlf: string = '\r\n';
+    const tab: string = ' '.repeat(4);
     const title: string = 'Available commands';
 
-    this._outputCb(BoxChars.HORIZONTAL.repeat(terminalWidth) + crlf);
-    this._outputCb(App.padCenter(title, terminalWidth) + crlf);
-    this._outputCb(BoxChars.HORIZONTAL.repeat(terminalWidth) + crlf);
-
     const commandNames: string[] = Object.values(Commands);
-    commandNames.forEach(command => {
-      switch (command) {
-        case Commands.INFO:
-          command = `${command} <command-name>`;
-          break;
-        case Commands.STEPS:
-        case Commands.ROTATE:
-        case Commands.ROTATE_CLOCKWISE:
-          command = `${command} <n>`;
-          break;
-      }
+    const largestCommandUsage = commandNames.reduce((prev, curr) => {
+      return Math.max(prev, this.getCommandUsage(curr).length);
+    }, 0);
 
-      const line: string = command.padStart(command.length + Math.floor((terminalWidth - title.length) / 2));
-      this._outputCb(line + crlf);
+    this._outputCb(BoxChars.HORIZONTAL.repeat(terminalWidth) + crlf);
+    this._outputCb(tab + tab + title + crlf);
+    this._outputCb(BoxChars.HORIZONTAL.repeat(terminalWidth) + crlf);
+
+    commandNames.forEach(commandName => {
+      this.printCommandInfo(commandName, terminalWidth, largestCommandUsage);
     });
+
+    this._outputCb(crlf);
   }
 
   private parseInput(line: string): ICommand | null { // Returns null when the line is not a valid command
@@ -76,25 +122,25 @@ class App implements IApp {
     // First we check that there is a valid command
     const [command, ...args] = input.split(' ');
     if (!commandNames.includes(command)) {
-      this._outputCb(Messages.UNKNOWN_COMMAND + crlf);
+      this._outputCb(Messages.UNKNOWN_COMMAND + crlf + crlf);
       return null;
     }
 
     if (args.length > 1) {
       // There is no command that accepts more than 1 argument
-      this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS + crlf);
+      this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS + crlf + crlf);
       return null;
     }
 
     if (command === Commands.INFO) {
       if (args.length === 1 && commandNames.includes(args[0])) {
-        this._outputCb('Info command with argument ' + args[0] + crlf);
-        return { type: command, args: args} as ICommand;
+        // this._outputCb('Info command with argument ' + args[0] + crlf + crlf);
+        return { type: command, args: args } as ICommand;
       } else if (args.length === 0) {
-        this._outputCb('Info command' + crlf);
+        // this._outputCb('Info command' + crlf);
         return { type: command } as ICommand;
       } else {
-        this._outputCb(Messages.UNKNOWN_COMMAND + crlf);
+        this._outputCb(Messages.UNKNOWN_COMMAND + crlf + crlf);
         return null;
       }
     }
@@ -105,9 +151,9 @@ class App implements IApp {
       command === Commands.ROTATE_CLOCKWISE
     ) {
       if (args.length === 0) {
-        return { type: command, args: ['1']} as ICommand;
+        return { type: command, args: ['1'] } as ICommand;
       } else if (!numberRegex.test(args[0])) {
-        this._outputCb(`Usage: ${command} <number>` + crlf);
+        this._outputCb(`Usage: ${command} <number>` + crlf + crlf);
         return null;
       }
 
@@ -120,7 +166,7 @@ class App implements IApp {
 
     if (args.length > 0) {
       // The remaining unhandled commands do not require any arguments
-      this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS + crlf);
+      this._outputCb(Messages.WRONG_NUMBER_OF_PARAMETERS + crlf + crlf);
       return null;
     }
 
@@ -143,7 +189,7 @@ class App implements IApp {
 
           if (!conditionCb(input)) {
             this._outputCb(messageOnError);
-            this._outputCb(crlf);
+            this._outputCb(crlf + crlf);
 
             answer = await this.askPrompt(question, messageOnError, conditionCb);
           } else {
@@ -169,7 +215,7 @@ class App implements IApp {
       });
 
       if (fileExists(filename)) {
-        this._outputCb(Messages.FILE_EXISTS + crlf);
+        this._outputCb(Messages.FILE_EXISTS + crlf + crlf);
         let confirmation = await this.askPrompt(Messages.REPLACE_FILE, Messages.INVALID_ANSWER, (input: string): boolean => {
           return yesOrNoRegex.test(input);
         });
@@ -177,14 +223,14 @@ class App implements IApp {
         confirmation = confirmation.trim().toLowerCase()[0];
 
         if (confirmation === 'y') {
-          saveFile(this._canvas.getCanvasData(), filename);
-          this._outputCb(Messages.FILE_SAVED + crlf);
+          const filePath = saveFile(this._canvas.getCanvasData(), filename);
+          this._outputCb(Messages.FILE_SAVED + filePath + crlf + crlf);
         } else {
           this.saveFileDialog();
         }
       } else {
-        saveFile(this._canvas.getCanvasData(), filename);
-        this._outputCb(Messages.FILE_SAVED + crlf);
+        const filePath = saveFile(this._canvas.getCanvasData(), filename);
+        this._outputCb(Messages.FILE_SAVED + filePath + crlf + crlf);
       }
     } catch (err) {
       throw err;
@@ -219,8 +265,11 @@ class App implements IApp {
       case Commands.SAVE:
         this.saveCommand();
         break;
+      case Commands.INFO:
+        this.commandInfo(command);
+        break;
       default:
-        this._outputCb(Messages.UNKNOWN_COMMAND + '\r\n');
+        this._outputCb(Messages.UNKNOWN_COMMAND + '\r\n' + '\r\n');
     }
   }
 
@@ -242,12 +291,12 @@ class App implements IApp {
 
   private positionCommand() {
     const { x, y } = this._canvas.cursorPosition;
-    this._outputCb(`The current cursor position is (${x}, ${y})` + '\r\n');
+    this._outputCb(`The current cursor position is (${x}, ${y})` + '\r\n' + '\r\n');
   }
 
   private directionCommand() {
     const direction: string = this._canvas.cursorDirection;
-    this._outputCb(`The current cursor direction is ${direction}` + '\r\n');
+    this._outputCb(`The current cursor direction is ${direction}` + '\r\n' + '\r\n');
   }
 
   private quitCommand() {
@@ -258,6 +307,28 @@ class App implements IApp {
     this._readLineInterface.removeAllListeners();
     await this.saveFileDialog();
     this.run();
+  }
+
+  private commandInfo(command: ICommand): void {
+    if (!command.args) {
+      this.displayCommands();
+      return;
+    }
+
+    const minWidth: number = 100;
+    const terminalWidth: number = process.stdout.columns ?? minWidth;
+
+    const crlf: string = '\r\n';
+    const tab: string = ' '.repeat(4);
+    const commandName: string = command.args[0];
+    const commandUsage: string = this.getCommandUsage(commandName);
+
+    if (terminalWidth <= commandUsage.length + 3 * tab.length + 16) {
+      this._outputCb(tab + tab + commandUsage + ': ' + this.getCommandInfo(commandName) + crlf);
+    }
+
+    this.printCommandInfo(commandName, terminalWidth, commandUsage.length);
+    this._outputCb(crlf);
   }
 }
 
