@@ -1,7 +1,8 @@
-import { Canvas, ICanvas } from './Canvas';
 import { Cursor, ICursor, ICursorState } from './Cursor';
-import { ICommand } from './Command';
+import { Canvas, ICanvas } from './Canvas';
+import { IHistory, History } from './History';
 import { App, IApp } from './App';
+import { ICommand } from './Command';
 import { Point } from './Point';
 
 export {
@@ -14,4 +15,6 @@ export {
   IApp,
   Point,
   ICommand,
+  History,
+  IHistory,
 };

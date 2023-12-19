@@ -1,11 +1,13 @@
 import { Cursor, ICursor, ICursorState } from './Cursor';
 import { ICommand } from './Command';
+import { IHistory, History } from './History';
 import { Point } from './Point';
 import {
   BoxDrawingCharacters as BoxChars,
   Commands,
   Directions,
   DrawingModes,
+  Messages,
 } from '../enums';
 
 interface ICanvas {
@@ -26,6 +28,7 @@ interface ICanvas {
 class Canvas implements ICanvas {
   private _data: string[][];
   private _cursor: ICursor;
+  private _history: IHistory;
 
   constructor(private _width: number, private _height: number, private _outputCb: (arg: string) => void) {
     if (_width < 0) throw new Error('The width of the canvas can not be negative');
@@ -38,6 +41,8 @@ class Canvas implements ICanvas {
       0, _width - 1,
       0, _height - 1
     );
+
+    this._history = new History(this._cursor.getState(), this.getCanvasState());
   }
 
   get width(): number {
@@ -78,8 +83,9 @@ class Canvas implements ICanvas {
     }
   };
 
-  private clearCommand(): void {
+  private clearCommand(command: ICommand): void {
     this.clear();
+    this._history.store(command, this._cursor.getState(), this.getCanvasState());
   }
 
   private stepsCommand(command: ICommand): void {
@@ -88,6 +94,7 @@ class Canvas implements ICanvas {
     }
 
     this.moveCursor(Number(command.args[0]));
+    this._history.store(command, this._cursor.getState(), this.getCanvasState());
   }
 
   private setDrawingMode(command: ICommand): void {
@@ -102,6 +109,8 @@ class Canvas implements ICanvas {
         this._cursor.drawingMode = DrawingModes.ERASER;
         break;
     }
+
+    this._history.store(command, this._cursor.getState(), this.getCanvasState());
   }
 
   private rotateCommand(command: ICommand): void {
@@ -114,6 +123,8 @@ class Canvas implements ICanvas {
     } else {
       this.rotateCursorDirection(Number(command.args[0]));
     }
+
+    this._history.store(command, this._cursor.getState(), this.getCanvasState());
   }
 
   private setState(canvasState: string[][], cursorState: ICursorState): void {
@@ -129,28 +140,26 @@ class Canvas implements ICanvas {
     });
   }
 
-  private undoCommand(command: ICommand): void {
-    switch (command.type) {
-      case Commands.CLEAR:
-        this.clearCommand();
-        break;
-      case Commands.STEPS:
-        this.stepsCommand(command);
-        break;
-      case Commands.ROTATE:
-      case Commands.ROTATE_CLOCKWISE:
-        this.rotateCommand(command);
-        break;
-      case Commands.DRAW:
-      case Commands.HOVER:
-      case Commands.ERASER:
-        this.setDrawingMode(command);
-        break;
+  private undoCommand(): void {
+    const response: string = this._history.undo();
+    const crlf: string = '\r\n';
+
+    if (response !== Messages.EMPTY_HISTORY) {
+      this.setState(this._history.currentCanvasState, this._history.currentCursorState);
     }
+
+    this._outputCb(response + crlf);
   }
 
-  private restoreCommand(command: ICommand): void {
+  private restoreCommand(): void {
+    const response: string = this._history.restore();
+    const crlf: string = '\r\n';
 
+    if (response !== Messages.NOTHING_TO_RESTORE) {
+      this.setState(this._history.currentCanvasState, this._history.currentCursorState);
+    }
+
+    this._outputCb(response + crlf);
   }
 
   display(callback: (arg: string) => void): void {
@@ -208,7 +217,7 @@ class Canvas implements ICanvas {
   executeCommand(command: ICommand): void {
     switch (command.type) {
       case Commands.CLEAR:
-        this.clearCommand();
+        this.clearCommand(command);
         break;
       case Commands.STEPS:
         this.stepsCommand(command);
@@ -223,16 +232,15 @@ class Canvas implements ICanvas {
         this.setDrawingMode(command);
         break;
       case Commands.UNDO:
-        this.undoCommand(command);
+        this.undoCommand();
         break;
       case Commands.RESTORE:
-        this.restoreCommand(command);
+        this.restoreCommand();
         break;
     }
-    this.generateCanvasSnapshot();
   }
 
-  generateCanvasSnapshot(): string[][] {
+  getCanvasState(): string[][] {
     const result: string[][] = this._data.map(row => row.map(cell => cell));
     return result;
   }

@@ -38,10 +38,10 @@ class History implements IHistory {
 
   private formatCommand(command: ICommand): string {
     if (!command.args) {
-      return command.type;
+      return `${command.type} command`;
     }
 
-    return `'${command.type}' command with arguments ${command.args.join(' ')}`;
+    return `'${command.type}' command with argument${command.args.length > 1 ? 's' : ''} ${command.args.join(' ')}`;
   }
 
   private canRestoreChanges(): boolean {
