@@ -1,6 +1,6 @@
 import { Canvas, ICanvas } from './Canvas';
-import { Cursor, ICursor } from './Cursor';
-import { ICommand, ICommandHistory, CommandHistory } from './CommandHistory';
+import { Cursor, ICursor, ICursorState } from './Cursor';
+import { ICommand } from './Command';
 import { App, IApp } from './App';
 import { Point } from './Point';
 
@@ -9,10 +9,9 @@ export {
   ICanvas,
   Cursor,
   ICursor,
+  ICursorState,
   App,
   IApp,
   Point,
   ICommand,
-  ICommandHistory,
-  CommandHistory,
 };

@@ -1,13 +1,11 @@
 import * as readLine from 'readline';
-import assert from 'assert';
 import { ICanvas } from './Canvas';
-import { ICommand } from './CommandHistory';
+import { ICommand } from './Command';
 import {
   BoxDrawingCharacters as BoxChars,
   Commands,
   Messages,
-  DrawingModes,
-  Directions,
+  CommandsInfo,
 } from '../enums';
 import { fileExists } from '../utils/fileExists';
 import { saveFile } from '../utils/saveFile';
@@ -37,7 +35,7 @@ class App implements IApp {
   }
 
   private displayCommands(): void {
-    const minWidth: number = 50;
+    const minWidth: number = 100;
     const terminalWidth: number = Math.min(process.stdout.columns ?? minWidth, minWidth);
     const crlf: string = '\r\n';
     const title: string = 'Available commands';
@@ -62,43 +60,6 @@ class App implements IApp {
       const line: string = command.padStart(command.length + Math.floor((terminalWidth - title.length) / 2));
       this._outputCb(line + crlf);
     });
-  }
-
-  private simplifyArg(command: Commands, inputArg: string): number {
-    let arg: number = Number(inputArg);
-
-    if (command !== Commands.STEPS) {
-      const availableDirs = Object.values(Directions).length;
-      return (arg % availableDirs);
-    }
-
-    // If the command is equal to steps, we must check the direction we are facing and compute the maximum
-    // number of steps we can take, then return the minimum between the user input and said minimum
-
-    const { x: posX, y: posY } = this._canvas.cursorPosition;
-    const minDistNorth = Math.min(posY, arg);
-    const minDistEast = Math.min(this._canvas.width - 1 - posX, arg);
-    const minDistSouth = Math.min(this._canvas.height - 1 - posY, arg);
-    const minDistWest = Math.min(posX, arg);
-
-    switch (this._canvas.cursorDirection) {
-      case Directions.NORTH:
-        return minDistNorth;
-      case Directions.NORTHEAST:
-        return Math.min(minDistNorth, minDistEast);
-      case Directions.EAST:
-        return minDistEast;
-      case Directions.SOUTHEAST:
-        return Math.min(minDistSouth, minDistEast);
-      case Directions.SOUTH:
-        return minDistSouth;
-      case Directions.SOUTHWEST:
-        return Math.min(minDistSouth, minDistWest);
-      case Directions.WEST:
-        return minDistWest;
-      case Directions.NORTHWEST:
-        return Math.min(minDistNorth, minDistWest);
-    }
   }
 
   private parseInput(line: string): ICommand | null { // Returns null when the line is not a valid command
@@ -128,7 +89,7 @@ class App implements IApp {
     if (command === Commands.INFO) {
       if (args.length === 1 && commandNames.includes(args[0])) {
         this._outputCb('Info command with argument ' + args[0] + crlf);
-        return { type: command, userArgs: args, actualArgs: args } as ICommand;
+        return { type: command, args: args} as ICommand;
       } else if (args.length === 0) {
         this._outputCb('Info command' + crlf);
         return { type: command } as ICommand;
@@ -144,7 +105,7 @@ class App implements IApp {
       command === Commands.ROTATE_CLOCKWISE
     ) {
       if (args.length === 0) {
-        return { type: command, userArgs: ['1'], actualArgs: ['1'] } as ICommand;
+        return { type: command, args: ['1']} as ICommand;
       } else if (!numberRegex.test(args[0])) {
         this._outputCb(`Usage: ${command} <number>` + crlf);
         return null;
@@ -152,8 +113,7 @@ class App implements IApp {
 
       return {
         type: command,
-        userArgs: args,
-        actualArgs: [String(this.simplifyArg(command, args[0]))],
+        args: args,
       } as ICommand;
     }
 
@@ -237,19 +197,15 @@ class App implements IApp {
         this.displayCommand();
         break;
       case Commands.CLEAR:
-        this.clearCommand();
-        break;
       case Commands.STEPS:
-        this.stepsCommand(command);
-        break;
       case Commands.ROTATE:
       case Commands.ROTATE_CLOCKWISE:
-        this.rotateCommand(command);
-        break;
       case Commands.DRAW:
       case Commands.HOVER:
       case Commands.ERASER:
-        this.setDrawingMode(command);
+      case Commands.UNDO:
+      case Commands.RESTORE:
+        this._canvas.executeCommand(command);
         break;
       case Commands.POSITION:
         this.positionCommand();
@@ -282,41 +238,6 @@ class App implements IApp {
     this._canvas.display(text => {
       this._outputCb(text);
     });
-  }
-
-  private clearCommand(): void {
-    this._canvas.clear();
-    this._canvas.numberOfOperations += 1;
-  }
-
-  private stepsCommand(command: ICommand): void {
-    assert(command.actualArgs !== undefined, 'The command was not parsed properly.');
-    this._canvas.moveCursor(Number(command.actualArgs[0]), false);
-    this._canvas.numberOfOperations += 1;
-  }
-
-  private setDrawingMode(command: ICommand): void {
-    switch (command.type) {
-      case Commands.DRAW:
-        this._canvas.drawingMode = DrawingModes.DRAW;
-        break;
-      case Commands.HOVER:
-        this._canvas.drawingMode = DrawingModes.HOVER;
-        break;
-      case Commands.ERASER:
-        this._canvas.drawingMode = DrawingModes.ERASER;
-        break;
-    }
-  }
-
-  private rotateCommand(command: ICommand): void {
-    assert(command.actualArgs !== undefined, 'The command was not parsed properly.');
-
-    if (command.type === Commands.ROTATE) {
-      this._canvas.rotateCursorDirection(-Number(command.actualArgs[0]));
-    } else {
-      this._canvas.rotateCursorDirection(Number(command.actualArgs[0]));
-    }
   }
 
   private positionCommand() {

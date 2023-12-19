@@ -1,6 +1,12 @@
 import { DrawingModes, Directions } from '../enums';
 import { Point } from './Point';
 
+interface ICursorState {
+  position: Point;
+  drawingMode: DrawingModes;
+  direction: Directions;
+}
+
 interface ICursor {
   position: Point;
   drawingMode: DrawingModes;
@@ -8,6 +14,7 @@ interface ICursor {
 
   rotate(times: number): Directions;
   move(steps: number, callback: () => void): void;
+  getState(): ICursorState;
 }
 
 class Cursor implements ICursor {
@@ -45,19 +52,14 @@ class Cursor implements ICursor {
     this._drawingMode = mode;
   }
 
-  private static getInvertedDirection(dir: Directions): Directions {
-    const mappings = new Map<Directions, Directions>([
-      [Directions.NORTH, Directions.SOUTH],
-      [Directions.NORTHEAST, Directions.SOUTHWEST],
-      [Directions.EAST, Directions.WEST],
-      [Directions.SOUTHEAST, Directions.NORTHWEST],
-      [Directions.SOUTH, Directions.NORTH],
-      [Directions.SOUTHWEST, Directions.NORTHEAST],
-      [Directions.WEST, Directions.EAST],
-      [Directions.NORTHWEST, Directions.SOUTHEAST],
-    ]);
+  getState(): ICursorState {
+    const state = {
+      direction: this._direction,
+      drawingMode: this._drawingMode,
+      position: this.position
+    } as ICursorState;
 
-    return mappings.get(dir) ?? dir;
+    return state;
   }
 
   rotate(times: number): Directions {
@@ -114,4 +116,4 @@ class Cursor implements ICursor {
   }
 }
 
-export { ICursor, Cursor };
+export { ICursorState, ICursor, Cursor };
