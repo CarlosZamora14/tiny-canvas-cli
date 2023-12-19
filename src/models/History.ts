@@ -1,13 +1,14 @@
 import { ICursorState } from './Cursor';
 import { ICommand } from './Command';
+import { Messages } from '../enums';
 
 interface IHistory {
   size: number;
   currentCursorState: ICursorState;
   currentCanvasState: string[][];
   // The return value of these methods is a formatted string which will be display in the cli
-  undo: (callback: (command: ICommand) => void) => string;
-  restore: (callback: (command: ICommand) => void) => string;
+  undo: () => string;
+  restore: () => string;
   store: (command: ICommand, cursorState: ICursorState, canvasState: string[][]) => string;
 }
 
@@ -62,24 +63,22 @@ class History implements IHistory {
     return `Applied ${this.formatCommand(command)} successfully.`;
   };
 
-  undo(callback: (command: ICommand) => void): string {
+  undo(): string {
     if (this._size === 0) {
-      return `The command history is empty.`;
+      return Messages.EMPTY_HISTORY;
     }
 
     this._size -= 1;
     const command = this._commandHistory[this._size]; // The last applied command in the history
-    callback(command);
     return `The ${this.formatCommand(command)} was successfully undone.`;
   };
 
-  restore(callback: (command: ICommand) => void): string {
+  restore(): string {
     if (!this.canRestoreChanges()) {
-      return `There is nothing to restore.`;
+      return Messages.NOTHING_TO_RESTORE;
     }
 
     const command = this._commandHistory[this._size]; // The next command in the history
-    callback(command);
     this._size += 1;
     // We need to subtract one to return the current command formatted
     return `The ${this.formatCommand(command)} has been successfully restored.`;

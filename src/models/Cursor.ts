@@ -15,6 +15,7 @@ interface ICursor {
   rotate(times: number): Directions;
   move(steps: number, callback: () => void): void;
   getState(): ICursorState;
+  setState(cursorState: ICursorState): void;
 }
 
 class Cursor implements ICursor {
@@ -50,6 +51,21 @@ class Cursor implements ICursor {
 
   set drawingMode(mode: DrawingModes) {
     this._drawingMode = mode;
+  }
+
+  setState(cursorState: ICursorState): void {
+    const { x, y } = cursorState.position;
+
+    if (x > this._maxPosX || x < this._minPosX) {
+      throw new Error('The x-coordinate must be within the bounds.');
+    } else if (y > this._maxPosY || y < this._minPosY) {
+      throw new Error('The y-coordinate must be within the bounds.');
+    }
+
+    this._drawingMode = cursorState.drawingMode;
+    this._direction = cursorState.direction;
+    this._posX = x;
+    this._posY = y;
   }
 
   getState(): ICursorState {

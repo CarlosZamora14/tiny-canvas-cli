@@ -1,5 +1,4 @@
-import assert from 'assert';
-import { Cursor, ICursor } from './Cursor';
+import { Cursor, ICursor, ICursorState } from './Cursor';
 import { ICommand } from './Command';
 import { Point } from './Point';
 import {
@@ -84,7 +83,10 @@ class Canvas implements ICanvas {
   }
 
   private stepsCommand(command: ICommand): void {
-    assert(command.args !== undefined, 'The command was not parsed properly.');
+    if (command.args === undefined) {
+      throw new Error("The command 'steps' was not parsed properly.");
+    }
+
     this.moveCursor(Number(command.args[0]));
   }
 
@@ -103,13 +105,28 @@ class Canvas implements ICanvas {
   }
 
   private rotateCommand(command: ICommand): void {
-    assert(command.args !== undefined, 'The command was not parsed properly.');
+    if (command.args === undefined) {
+      throw new Error("The command 'rotate' was not parsed properly.");
+    }
 
     if (command.type === Commands.ROTATE) {
       this.rotateCursorDirection(-Number(command.args[0]));
     } else {
       this.rotateCursorDirection(Number(command.args[0]));
     }
+  }
+
+  private setState(canvasState: string[][], cursorState: ICursorState): void {
+    if (canvasState.length !== this._data.length || canvasState[0].length !== this._data[0].length) {
+      throw new Error('The dimensions of the new canvas state must match the previous canvas.');
+    }
+
+    this._cursor.setState(cursorState);
+    canvasState.forEach((row, yIndex) => {
+      row.forEach((cell, xIndex) => {
+        this._data[yIndex][xIndex] = cell;
+      });
+    });
   }
 
   private undoCommand(command: ICommand): void {
@@ -212,7 +229,7 @@ class Canvas implements ICanvas {
         this.restoreCommand(command);
         break;
     }
-    this.generateCanvasSnapshot()
+    this.generateCanvasSnapshot();
   }
 
   generateCanvasSnapshot(): string[][] {
