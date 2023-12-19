@@ -8,7 +8,7 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-const output = (arg: string): void => { process.stdout.write(arg); }
+const output = (arg: string): void => { process.stdout.write(arg); };
 
 new App(
   new Canvas(width, height, output),

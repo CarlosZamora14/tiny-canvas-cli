@@ -4,6 +4,7 @@ import { CommandsInfo } from './CommandsInfo';
 import { Directions } from './Directions';
 import { DrawingModes } from './DrawingModes';
 import { Messages } from './Messages';
+import { Colors } from './Colors';
 
 export {
   BoxDrawingCharacters,
@@ -12,4 +13,5 @@ export {
   Directions,
   DrawingModes,
   Messages,
+  Colors,
 };

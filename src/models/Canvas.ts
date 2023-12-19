@@ -1,14 +1,22 @@
-import { Cursor, ICursor, ICursorState } from './Cursor';
-import { ICommand } from './Command';
-import { IHistory, History } from './History';
-import { Point } from './Point';
+import {
+  Cursor,
+  ICursor,
+  ICursorState,
+  ICommand,
+  IHistory,
+  History,
+  Point
+} from './';
+
 import {
   BoxDrawingCharacters as BoxChars,
+  Colors,
   Commands,
   Directions,
   DrawingModes,
   Messages,
 } from '../enums';
+import { useColor } from '../utils';
 
 interface ICanvas {
   drawingMode: DrawingModes;
@@ -18,7 +26,7 @@ interface ICanvas {
   height: number;
 
   getCanvasData(): string;
-  display(callback: (arg: string) => void): void;
+  display(): void;
   clear(): void;
   moveCursor(steps: number): void;
   rotateCursorDirection(times: number): void;
@@ -146,9 +154,10 @@ class Canvas implements ICanvas {
 
     if (response !== Messages.EMPTY_HISTORY) {
       this.setState(this._history.currentCanvasState, this._history.currentCursorState);
+      this._outputCb(useColor(Colors.GREEN, response + crlf + crlf));
+    } else {
+      this._outputCb(useColor(Colors.YELLOW, response + crlf + crlf));
     }
-
-    this._outputCb(response + crlf);
   }
 
   private restoreCommand(): void {
@@ -157,12 +166,13 @@ class Canvas implements ICanvas {
 
     if (response !== Messages.NOTHING_TO_RESTORE) {
       this.setState(this._history.currentCanvasState, this._history.currentCursorState);
+      this._outputCb(useColor(Colors.GREEN, response + crlf + crlf));
+    } else {
+      this._outputCb(useColor(Colors.YELLOW, response + crlf + crlf));
     }
-
-    this._outputCb(response + crlf);
   }
 
-  display(callback: (arg: string) => void): void {
+  display(): void {
     const topBorder: string = (
       BoxChars.TOP_LEFT_CORNER +
       BoxChars.HORIZONTAL.repeat(this._width) +
@@ -175,13 +185,13 @@ class Canvas implements ICanvas {
     );
     const crlf: string = '\r\n';
 
-    callback(topBorder + crlf);
+    this._outputCb(topBorder + crlf);
     this._data.forEach(row => {
       const rowValues: string = row.reduce((prev, cur) => (prev + cur), '');
       const line: string = BoxChars.VERTICAL + rowValues + BoxChars.VERTICAL;
-      callback(line + crlf);
+      this._outputCb(line + crlf);
     });
-    callback(bottomBorder + crlf);
+    this._outputCb(bottomBorder + crlf + crlf);
   }
 
   getCanvasData(): string {

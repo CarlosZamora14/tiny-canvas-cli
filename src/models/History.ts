@@ -1,5 +1,4 @@
-import { ICursorState } from './Cursor';
-import { ICommand } from './Command';
+import { ICommand, ICursorState } from './';
 import { Messages } from '../enums';
 
 interface IHistory {
@@ -80,7 +79,6 @@ class History implements IHistory {
 
     const command = this._commandHistory[this._size]; // The next command in the history
     this._size += 1;
-    // We need to subtract one to return the current command formatted
     return `The ${this.formatCommand(command)} has been successfully restored.`;
   };
 }

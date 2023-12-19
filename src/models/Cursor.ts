@@ -1,5 +1,5 @@
 import { DrawingModes, Directions } from '../enums';
-import { Point } from './Point';
+import { Point } from './';
 
 interface ICursorState {
   position: Point;

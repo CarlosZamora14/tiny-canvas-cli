@@ -1,3 +1,6 @@
+import { useColor } from '../utils';
+import { Colors } from './Colors';
+
 enum Messages {
   REQUEST_FILE_NAME = 'File name: ',
   REPLACE_FILE = 'Do you want to replace the file? (y/n): ',
