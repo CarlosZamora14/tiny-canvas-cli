@@ -1,10 +1,9 @@
 <a name="readme-top"></a>
 
-<!-- PROJECT LOGO -->
 <br />
 <div align="center">
-
   <h3 align="center">Tiny Canvas CLI</h3>
+  <img src="https://github.com/CarlosZamora14/tiny-canvas-cli/assets/143096940/2e13228b-bbc7-4c3b-a00f-0c0b682930f7" alt="CLI application">
 </div>
 
 <details>
@@ -96,6 +95,11 @@ display
 
 <details>
   <summary>'Hello world' example</summary>
+  <br />
+  <div align="center">
+    <img src="https://github.com/CarlosZamora14/tiny-canvas-cli/assets/143096940/3f5d6be1-71bf-4502-a6a2-bf0564d36855" alt="Hello World example">
+  </div>
+  <br />
 <pre><code>hover
 steps 6
 rot 2
